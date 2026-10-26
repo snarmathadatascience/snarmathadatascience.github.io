@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta property="og:title" content="Narmatha S · Deepfake detection research">
+<meta property="og:description" content="AI researcher in deepfake detection, data scientist and computing educator in Doha, Qatar.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%23131726%22/%3E%3Ctext x=%2216%22 y=%2221%22 font-family=%22Arial%22 font-weight=%22700%22 font-size=%2213%22 fill=%22white%22 text-anchor=%22middle%22%3ENS%3C/text%3E%3C/svg%3E">
+<title>Narmatha S</title>
+<meta name="description" content="Narmatha S: AI researcher in deepfake detection, data scientist and computing educator based in Doha, Qatar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a research lab notebook. Narrow reading column for prose, wide "figure" panels for the
+   interactive lab, mono figure labels, one heat-ramp accent taken from the Grad-CAM / spectrum world. */
+:root {
+  --bg: #F3F4F8;
+  --surface: #FFFFFF;
+  --sunk: #E9EBF2;
+  --ink: #131726;
+  --muted: #586079;
+  --line: #D7DBE6;
+  --accent: #B3264F;
+  --accent-ink: #FFFFFF;
+  --amber: #C97A12;
+  --ok: #1E7A55;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --radius: 10px;
+  --wrap: 1120px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E111A; --surface: #161A26; --sunk: #1C2130; --ink: #E9EBF3; --muted: #9AA2BA;
+    --line: #2A3044; --accent: #F2638A; --accent-ink: #1B0710; --amber: #F0AE4A; --ok: #4CC394;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E111A; --surface: #161A26; --sunk: #1C2130; --ink: #E9EBF3; --muted: #9AA2BA;
+  --line: #2A3044; --accent: #F2638A; --accent-ink: #1B0710; --amber: #F0AE4A; --ok: #4CC394;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--body); font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.wrap {
+  max-width: var(--wrap); margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1, h2, h3 { font-family: var(--display); line-height: 1.12; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+p { margin: 0; }
+.mono { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.04em; }
+.label { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+/* ---------- Top bar ---------- */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.top .wrap { display: flex; align-items: center; gap: 20px; min-height: 60px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; white-space: nowrap; }
+.mark {
+  width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center;
+  background: var(--ink); color: var(--bg); font-family: var(--display); font-weight: 800; font-size: 0.9rem;
+}
+.nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
+.nav::-webkit-scrollbar { display: none; }
+.nav a { text-decoration: none; color: var(--muted); font-size: 0.9rem; padding: 6px 10px; border-radius: 6px; white-space: nowrap; }
+.nav a:hover { color: var(--ink); background: var(--sunk); }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; text-decoration: none; cursor: pointer;
+  font: 600 0.92rem/1 var(--body); padding: 11px 16px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  transition: border-color .15s, transform .15s;
+}
+.btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.top .btn { padding: 8px 12px; font-size: 0.85rem; white-space: nowrap; }
+@media (max-width: 720px) { .top .btn span { display: none; } }
+
+/* ---------- Hero ---------- */
+.hero { padding-block: 64px 40px; }
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 48px; align-items: center; }
+@media (max-width: 860px) { .hero .wrap { grid-template-columns: 1fr; gap: 32px; } .hero { padding-top: 40px; } }
+.status {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); font-size: 0.82rem; color: var(--muted);
+}
+.status i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
+.hero h1 { font-size: clamp(2.3rem, 5.4vw, 4rem); font-weight: 800; margin-top: 18px; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero .lede { font-size: 1.12rem; color: var(--muted); max-width: 60ch; margin-top: 18px; }
+.hero .who { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.92rem; }
+.hero .who b { font-weight: 600; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+.scanfig { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+.scanfig canvas { display: block; width: 100%; aspect-ratio: 1 / 1; max-width: 100%; }
+.scanfig figcaption { margin-top: 12px; font-size: 0.85rem; color: var(--muted); }
+.scanfig figcaption .label { display: block; margin-bottom: 4px; }
+
+/* ---------- Spec strip ---------- */
+.specs { border-block: 1px solid var(--line); background: var(--surface); }
+.specs ul { list-style: none; margin: 0 auto; padding-block: 22px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .specs ul { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.specs li { display: flex; flex-direction: column; gap: 2px; }
+.specs b { font-family: var(--display); font-size: 1.9rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.specs span { font-size: 0.88rem; color: var(--muted); }
+
+/* ---------- Sections ---------- */
+section.block { padding-block: 72px; }
+section.block + section.block { border-top: 1px solid var(--line); }
+.head { display: grid; gap: 10px; margin-bottom: 36px; max-width: 70ch; }
+.head h2 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); font-weight: 700; }
+.head p { color: var(--muted); font-size: 1.04rem; }
+
+/* Research */
+.research { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 40px; }
+@media (max-width: 860px) { .research { grid-template-columns: 1fr; } }
+.prose { display: grid; gap: 16px; max-width: 64ch; }
+.prose h3 { font-size: 1.15rem; font-weight: 700; margin-top: 8px; }
+.questions { display: grid; gap: 12px; align-content: start; }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+.q .label { margin-bottom: 6px; display: block; }
+.q p { font-weight: 500; }
+
+/* Inception diagram */
+.diagram { margin-top: 44px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+.diagram-scroll { overflow-x: auto; }
+.diagram svg { display: block; min-width: 640px; width: 100%; height: auto; }
+.diagram svg text { font-family: var(--body); fill: var(--ink); }
+.diagram svg .sub { fill: var(--muted); font-family: var(--mono); font-size: 11px; }
+.diagram svg .box { fill: var(--sunk); stroke: var(--line); }
+.diagram svg .box.hot { fill: color-mix(in srgb, var(--accent) 14%, var(--surface)); stroke: var(--accent); }
+.diagram svg .wire { stroke: var(--muted); fill: none; stroke-width: 1.4; }
+.diagram svg .arrow { fill: var(--muted); }
+.diagram figcaption { margin-top: 12px; font-size: 0.9rem; color: var(--muted); max-width: 80ch; }
+
+/* Timeline */
+.timeline { list-style: none; margin: 0; padding: 0; position: relative; display: grid; gap: 0; }
+.timeline::before { content: ""; position: absolute; left: 86px; top: 8px; bottom: 8px; width: 2px; background: var(--line); }
+.timeline li { display: grid; grid-template-columns: 70px 32px minmax(0, 1fr); gap: 0 0; padding-block: 14px; align-items: start; }
+.timeline .yr { font-family: var(--mono); font-weight: 500; color: var(--muted); padding-top: 2px; font-variant-numeric: tabular-nums; }
+.timeline .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 2px solid var(--muted); margin: 5px 0 0 9px; position: relative; z-index: 1; }
+.timeline li.key .dot { border-color: var(--accent); background: var(--accent); }
+.timeline li.now .dot { border-color: var(--ok); background: var(--ok); }
+.timeline h3 { font-size: 1.08rem; font-weight: 700; }
+.timeline .venue { font-size: 0.88rem; color: var(--muted); margin-top: 2px; }
+.timeline p.note { margin-top: 6px; max-width: 70ch; }
+
+/* Lab */
+.lab { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.lab-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--line); background: var(--sunk); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: none; color: var(--muted); font: 500 0.88rem var(--body); padding: 9px 14px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.upload { position: relative; }
+.upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.lab-bar .privacy { font-size: 0.82rem; color: var(--muted); margin-left: auto; }
+@media (max-width: 720px) { .lab-bar .privacy { margin-left: 0; flex-basis: 100%; } }
+.lab-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 0; }
+@media (max-width: 860px) { .lab-body { grid-template-columns: 1fr; } }
+.lab-main { padding: 20px; border-right: 1px solid var(--line); display: grid; gap: 16px; align-content: start; }
+@media (max-width: 860px) { .lab-main { border-right: 0; border-bottom: 1px solid var(--line); } }
+.panels { padding: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 480px) { .panels { grid-template-columns: 1fr; } }
+.panel { margin: 0; display: grid; gap: 8px; align-content: start; }
+.panel canvas { width: 100%; aspect-ratio: 1 / 1; max-width: 100%; display: block; border-radius: 8px; background: var(--sunk); image-rendering: pixelated; }
+.panel figcaption { font-size: 0.86rem; line-height: 1.45; }
+.panel figcaption .label { display: block; color: var(--accent); }
+.panel figcaption span { color: var(--muted); }
+.meter { display: grid; gap: 8px; padding: 16px; border-radius: var(--radius); background: var(--sunk); }
+.meter .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.meter b { font-family: var(--display); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.track { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.track i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--accent); transition: width .5s ease; }
+.verdict { font-weight: 600; }
+.meter p { font-size: 0.88rem; color: var(--muted); }
+.lab-foot { padding: 14px 18px; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--muted); }
+
+/* Publications */
+.pubs { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.pub { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 18px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+@media (max-width: 640px) { .pub { grid-template-columns: 1fr; gap: 8px; } }
+.pub .yr { font-family: var(--display); font-weight: 700; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+.pub h3 { font-family: var(--body); font-size: 1rem; font-weight: 600; line-height: 1.4; }
+.pub .venue { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+.pub .venue em { font-style: italic; }
+.pub .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.tag { font-family: var(--mono); font-size: 0.72rem; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.tag.hot { border-color: var(--accent); color: var(--accent); }
+.pub .links { display: flex; gap: 8px; flex-wrap: wrap; }
+.pub .links .btn { padding: 8px 12px; font-size: 0.82rem; }
+
+/* Projects */
+.projects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 900px) { .projects { grid-template-columns: 1fr; } }
+.project { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: grid; gap: 12px; align-content: start; }
+.project h3 { font-size: 1.2rem; font-weight: 700; }
+.project p { color: var(--muted); font-size: 0.95rem; }
+.project .stack { display: flex; flex-wrap: wrap; gap: 6px; }
+.project .pill { justify-self: start; font-size: 0.78rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--sunk); color: var(--muted); }
+.project .pill.live { background: color-mix(in srgb, var(--ok) 16%, var(--surface)); color: var(--ok); }
+.project a.more { font-weight: 600; text-decoration: none; color: var(--accent); }
+.project a.more:hover { text-decoration: underline; }
+
+/* Experience */
+.exp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 860px) { .exp { grid-template-columns: 1fr; } }
+.job { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: grid; gap: 8px; align-content: start; }
+.job .meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.job h3 { font-family: var(--body); font-size: 1.02rem; font-weight: 600; }
+.job .org { color: var(--muted); font-size: 0.9rem; }
+.job .when { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+.job ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.94rem; }
+.job .figure { font-family: var(--display); font-weight: 700; color: var(--accent); }
+
+/* Skills */
+.skills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 900px) { .skills { grid-template-columns: 1fr; } }
+.skillset { display: grid; gap: 12px; align-content: start; }
+.skillset h3 { font-size: 1.05rem; font-weight: 700; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-size: 0.86rem; padding: 6px 11px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); }
+.edu { margin-top: 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 900px) { .edu { grid-template-columns: 1fr; } }
+.edu div { border-top: 2px solid var(--ink); padding-top: 12px; display: grid; gap: 4px; }
+.edu b { font-weight: 600; }
+.edu span { color: var(--muted); font-size: 0.9rem; }
+
+/* Contact */
+.contact { background: var(--ink); color: var(--bg); border-radius: 18px; padding: clamp(28px, 5vw, 56px); display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; align-items: center; }
+@media (max-width: 860px) { .contact { grid-template-columns: 1fr; } }
+.contact h2 { font-size: clamp(1.8rem, 3.6vw, 2.6rem); font-weight: 800; }
+.contact p { opacity: 0.8; margin-top: 12px; max-width: 54ch; }
+.contact .lines { display: grid; gap: 10px; }
+.cline { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--bg) 22%, transparent); }
+.cline .k { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; display: block; }
+.cline .v { font-weight: 600; word-break: break-all; user-select: all; }
+.cline a.v { text-decoration: none; }
+.cline a.v:hover { text-decoration: underline; }
+.cline button { flex: none; border: 1px solid color-mix(in srgb, var(--bg) 35%, transparent); background: transparent; color: inherit; border-radius: 6px; padding: 6px 10px; font: 500 0.8rem var(--body); cursor: pointer; }
+.cline button:hover { background: color-mix(in srgb, var(--bg) 12%, transparent); }
+
+footer { padding-block: 36px 48px; color: var(--muted); font-size: 0.85rem; }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero .reveal { animation: rise .7s cubic-bezier(.2,.7,.2,1) both; }
+  .hero .reveal:nth-child(2) { animation-delay: .06s; }
+  .hero .reveal:nth-child(3) { animation-delay: .12s; }
+  .hero .reveal:nth-child(4) { animation-delay: .18s; }
+  .hero .reveal:nth-child(5) { animation-delay: .24s; }
+  @keyframes rise { from { transform: translateY(10px); } to { transform: none; } }
+}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)} body{margin:0} img{max-width:100%} [hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Narmatha S, back to top"><span class="mark">NS</span><span>Narmatha S</span></a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#research">Research</a>
+      <a href="#journey">Journey</a>
+      <a href="#lab">Try the lab</a>
+      <a href="#publications">Publications</a>
+      <a href="#projects">Projects</a>
+      <a href="#experience">Experience</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a class="btn" href="https://www.linkedin.com/in/narmatha-s-705507149" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.75h4v11.25H3zM9.5 9.75h3.8v1.6h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-4.9c0-1.17-.02-2.68-1.63-2.68-1.64 0-1.89 1.28-1.89 2.6V21h-4z"/></svg>
+      <span>LinkedIn</span>
+    </a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <span class="status reveal"><i></i>Open to data science, AI education and lecturer roles in Qatar</span>
+        <h1 class="reveal">Teaching machines to tell <em>real faces</em> from synthetic ones.</h1>
+        <p class="lede reveal">I research deep convolutional networks that detect deepfake images and videos, and I teach people how data and AI work. My doctoral work designed a family of Deep Inception CNNs for spotting manipulated content in online media.</p>
+        <div class="who reveal">
+          <span><b>PhD candidate</b>, AI &amp; Deep Learning · Karpagam University</span>
+          <span>Thesis submitted, viva pending</span>
+          <span>Doha, Qatar</span>
+        </div>
+        <div class="actions reveal">
+          <a class="btn primary" href="#research">Explore my research</a>
+          <a class="btn" href="#lab">Try the forensics lab</a>
+          <a class="btn" href="https://www.linkedin.com/in/narmatha-s-705507149" target="_blank" rel="noopener">View LinkedIn profile</a>
+        </div>
+      </div>
+      <figure class="scanfig">
+        <canvas id="scan" aria-label="Animated illustration: a grid of cells shaped like a face, with heat concentrating on the eyes, mouth and outline"></canvas>
+        <figcaption><span class="label">Fig. 0 · Where a detector looks</span>An illustration of attention maps: detectors often focus on the eyes, mouth and the boundary where a face was blended in.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <div class="specs">
+    <ul class="wrap" aria-label="At a glance">
+      <li><b>5</b><span>peer-reviewed publications</span></li>
+      <li><b>3</b><span>Deep Inception architectures: V4, V5, V7</span></li>
+      <li><b>300+</b><span>learners taught in Python, SQL and BI</span></li>
+      <li><b>5+ yrs</b><span>industry work in data and databases</span></li>
+    </ul>
+  </div>
+
+  <section class="block" id="research">
+    <div class="wrap">
+      <div class="head">
+        <span class="label">Research</span>
+        <h2>Detecting deepfakes in online content</h2>
+        <p>Generated and face-swapped media now spreads through social networks faster than people can check it. My research builds detectors that are accurate, and whose decisions can be explained.</p>
+      </div>
+      <div class="research">
+        <div class="prose">
+          <h3>The problem</h3>
+          <p>Deepfakes are images and videos where a face has been generated or swapped by a neural network. They are used for fake profiles, fraud, impersonation and misinformation. They also threaten identity checks that rely on a selfie or a video call.</p>
+          <h3>My approach</h3>
+          <p>I build on Inception-style convolutional networks. An Inception block looks at an image through several filter sizes at the same time. Small filters pick up fine traces such as blending edges, texture and noise. Larger filters see wider inconsistencies across the face.</p>
+          <p>Across my doctoral work I developed three variants of a Deep Inception CNN. They study how to learn better representations of deepfake content, how to supervise the network's internal features, and how to combine these ideas into one integrated model for online content.</p>
+          <h3>Why it matters in the Gulf</h3>
+          <p>Banks, telecoms, newsrooms and government digital services all verify images and identities at scale. Reliable, explainable deepfake detection supports trust in that digital infrastructure.</p>
+        </div>
+        <div class="questions">
+          <div class="q"><span class="label">Question 1</span><p>Which visual traces separate a real face from a generated or swapped one?</p></div>
+          <div class="q"><span class="label">Question 2</span><p>How can a network learn those traces so they still work on new content from social media?</p></div>
+          <div class="q"><span class="label">Question 3</span><p>How do we show people why a detector flagged an image, so its output can be trusted and checked?</p></div>
+        </div>
+      </div>
+
+      <figure class="diagram">
+        <div class="diagram-scroll">
+          <svg viewBox="0 0 760 250" role="img" aria-label="Diagram of an Inception block: an input face image feeds four parallel branches, 1 by 1, 3 by 3, 5 by 5 convolution and pooling, which are concatenated and passed to a classifier that outputs real or fake.">
+            <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+            <rect class="box" x="10" y="95" width="110" height="60" rx="8"/>
+            <text x="65" y="122" text-anchor="middle" font-weight="600" font-size="14">Face image</text>
+            <text class="sub" x="65" y="141" text-anchor="middle">299 × 299 × 3</text>
+            <g>
+              <rect class="box hot" x="200" y="12" width="170" height="44" rx="8"/>
+              <text x="285" y="32" text-anchor="middle" font-weight="600" font-size="13">1 × 1 conv</text>
+              <text class="sub" x="285" y="48" text-anchor="middle">mixes colour channels</text>
+              <rect class="box hot" x="200" y="70" width="170" height="44" rx="8"/>
+              <text x="285" y="90" text-anchor="middle" font-weight="600" font-size="13">3 × 3 conv</text>
+              <text class="sub" x="285" y="106" text-anchor="middle">fine edges, blending seams</text>
+              <rect class="box hot" x="200" y="128" width="170" height="44" rx="8"/>
+              <text x="285" y="148" text-anchor="middle" font-weight="600" font-size="13">5 × 5 conv</text>
+              <text class="sub" x="285" y="164" text-anchor="middle">wider facial context</text>
+              <rect class="box hot" x="200" y="186" width="170" height="44" rx="8"/>
+              <text x="285" y="206" text-anchor="middle" font-weight="600" font-size="13">3 × 3 pooling</text>
+              <text class="sub" x="285" y="222" text-anchor="middle">robust local summary</text>
+            </g>
+            <path class="wire" d="M120 125 C160 125 160 34 198 34" marker-end="url(#arr)"/>
+            <path class="wire" d="M120 125 C160 125 160 92 198 92" marker-end="url(#arr)"/>
+            <path class="wire" d="M120 125 C160 125 160 150 198 150" marker-end="url(#arr)"/>
+            <path class="wire" d="M120 125 C160 125 160 208 198 208" marker-end="url(#arr)"/>
+            <rect class="box" x="450" y="95" width="120" height="60" rx="8"/>
+            <text x="510" y="121" text-anchor="middle" font-weight="600" font-size="13">Concatenate</text>
+            <text class="sub" x="510" y="140" text-anchor="middle">stacked × many blocks</text>
+            <path class="wire" d="M370 34 C410 34 410 125 448 125" marker-end="url(#arr)"/>
+            <path class="wire" d="M370 92 C410 92 410 125 448 125"/>
+            <path class="wire" d="M370 150 C410 150 410 125 448 125"/>
+            <path class="wire" d="M370 208 C410 208 410 125 448 125"/>
+            <rect class="box" x="620" y="95" width="130" height="60" rx="8"/>
+            <text x="685" y="121" text-anchor="middle" font-weight="600" font-size="13">Classifier</text>
+            <text class="sub" x="685" y="140" text-anchor="middle">P(fake) + heatmap</text>
+            <path class="wire" d="M570 125 L618 125" marker-end="url(#arr)"/>
+          </svg>
+        </div>
+        <figcaption><span class="label">Fig. 1 · An Inception block</span> Parallel filters of different sizes see the same face at several scales at once. Stacking many of these blocks lets the network combine fine traces with wider context before deciding.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="block" id="journey">
+    <div class="wrap">
+      <div class="head">
+        <span class="label">Research journey</span>
+        <h2>From a first study to an integrated model</h2>
+        <p>Each publication built on the one before it. The dates below are publication years.</p>
+      </div>
+      <ol class="timeline">
+        <li><span class="yr">2023</span><span class="dot"></span><div><h3>Recognising deepfake videos with deep learning</h3><p class="venue">Karpagam Journal of Computer Science</p><p class="note">My first study applied deep learning to recognise manipulated videos and set out the core detection problem.</p></div></li>
+        <li><span class="yr">2024</span><span class="dot"></span><div><h3>A systematic review of deepfake detection methods</h3><p class="venue">IC-IRISH'24 international conference, Thailand</p><p class="note">A review of detection methods for manipulated media files, used to find the gaps my models would address.</p></div></li>
+        <li class="key"><span class="yr">2025</span><span class="dot"></span><div><h3>Deep Inception V5: a latent-feature supervision network</h3><p class="venue">IEEE ICERCS conference</p><p class="note">Supervising the network's internal (latent) features to guide what it learns about deepfake content.</p></div></li>
+        <li class="key"><span class="yr">2026</span><span class="dot"></span><div><h3>Deep Inception V4: predictive representation learning</h3><p class="venue">JoWUA journal</p><p class="note">Learning representations that predict deepfake content shared on online social networks.</p></div></li>
+        <li class="key"><span class="yr">2026</span><span class="dot"></span><div><h3>Deep Inception V7: an integrated CNN for deepfake prediction</h3><p class="venue">Archives for Technical Sciences</p><p class="note">An integrated convolutional network for predicting deepfakes in online content.</p></div></li>
+        <li class="now"><span class="yr">Now</span><span class="dot"></span><div><h3>PhD thesis submitted</h3><p class="venue">Karpagam University · viva pending</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="block" id="lab">
+    <div class="wrap">
+      <div class="head">
+        <span class="label">Interactive lab</span>
+        <h2>See what a deepfake detector sees</h2>
+        <p>Image generators often enlarge pictures step by step, and that can leave a faint, regular grid that people cannot see. This lab breaks an image into the signals an Inception block works with, and shows that grid in the frequency spectrum. Compare the two samples, or upload your own image.</p>
+      </div>
+
+      <div class="lab">
+        <div class="lab-bar">
+          <div class="seg" role="group" aria-label="Sample image">
+            <button type="button" id="s-nat" aria-pressed="true">Natural texture</button>
+            <button type="button" id="s-gen" aria-pressed="false">Generator-style upsampling</button>
+          </div>
+          <label class="btn upload" for="lab-file">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0-5 5m5-5 5 5M4 20h16"/></svg>
+            Upload your own image
+            <input id="lab-file" type="file" accept="image/*">
+          </label>
+          <span class="privacy">Your image is analysed in your browser and never uploaded.</span>
+        </div>
+        <div class="lab-body">
+          <div class="lab-main">
+            <figure class="panel">
+              <canvas id="c-orig" width="256" height="256"></canvas>
+              <figcaption><span class="label">Input</span><span id="src-name">Natural texture, greyscale, 256 × 256</span></figcaption>
+            </figure>
+            <div class="meter" aria-live="polite">
+              <div class="row"><span class="label">Grid-peak score</span><b id="score">—</b></div>
+              <div class="track"><i id="bar"></i></div>
+              <p class="verdict" id="verdict">Analysing…</p>
+              <p id="explain">How strongly the image repeats on a regular two-pixel grid, compared with its normal fine detail.</p>
+            </div>
+          </div>
+          <div class="panels">
+            <figure class="panel">
+              <canvas id="c-edge" width="256" height="256"></canvas>
+              <figcaption><span class="label">3 × 3 branch · edges</span><span>Fine edges and seams, like a small Inception filter.</span></figcaption>
+            </figure>
+            <figure class="panel">
+              <canvas id="c-ctx" width="256" height="256"></canvas>
+              <figcaption><span class="label">5 × 5 branch · context</span><span>A smoothed view that keeps the wider shapes.</span></figcaption>
+            </figure>
+            <figure class="panel">
+              <canvas id="c-res" width="256" height="256"></canvas>
+              <figcaption><span class="label">Noise residual</span><span>Image minus context. Forensic models study this layer of fine noise.</span></figcaption>
+            </figure>
+            <figure class="panel">
+              <canvas id="c-fft" width="256" height="256"></canvas>
+              <figcaption><span class="label">Frequency spectrum</span><span>Centre = coarse detail, edges = finest detail. Bright dots at the edges and corners mean a regular grid.</span></figcaption>
+            </figure>
+          </div>
+        </div>
+        <p class="lab-foot">An educational tool, not a deepfake detector. The grid-peak score measures one known trace. Real photos that were resized or heavily compressed can also show peaks, and many modern generators leave none. A trained detector combines thousands of traces like this one.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="publications">
+    <div class="wrap">
+      <div class="head">
+        <span class="label">Publications</span>
+        <h2>Peer-reviewed work</h2>
+        <p>Newest first. Use the copy button to get a ready-made citation.</p>
+      </div>
+      <ul class="pubs" id="pubs"></ul>
+    </div>
+  </section>
+
+  <section class="block" id="projects">
+    <div class="wrap">
+      <div class="head">
+        <span class="label">Projects</span>
+        <h2>Research turned into working tools</h2>
+      </div>
+      <div class="projects">
+        <article class="project">
+          <span class="pill">Model training in progress</span>
+          <h3>Deepfake Image Detector</h3>
+          <p>A web app that estimates whether a face is real or AI-generated and shows a Grad-CAM heatmap of the regions behind its decision. Two-phase transfer learning on an Inception backbone.</p>
+          <div class="stack"><span class="tag">TensorFlow</span><span class="tag">InceptionV3</span><span class="tag">Grad-CAM</span><span class="tag">Streamlit</span></div>
+          <a class="more" href="https://github.com/snarmathadatascience/deepfake-detector" target="_blank" rel="noopener">View code on GitHub →</a>
+        </article>
+        <article class="project">
+          <span class="pill live">Live on this page</span>
+          <h3>Frequency Forensics Lab</h3>
+          <p>An in-browser tool that splits an image into edge, context and noise layers and computes its 2D Fourier spectrum to reveal upsampling grids. Written from scratch in JavaScript.</p>
+          <div class="stack"><span class="tag">2D FFT</span><span class="tag">Image forensics</span><span class="tag">JavaScript</span></div>
+          <a class="more" href="#lab">Open the lab →</a>
+        </article>
+        <article class="project">
+          <span class="pill">Demo with sample data</span>
+          <h3>Learner Success Analytics</h3>
+          <p>A dashboard that tracks course completion and attendance and lists at-risk learners each week, so teachers can step in early. Built from my experience teaching 300+ learners.</p>
+          <div class="stack"><span class="tag">Python</span><span class="tag">SQL</span><span class="tag">Power BI-style analytics</span></div>
+          <span class="mono" style="color: var(--muted)">Live demo available on request</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="experience">
+    <div class="wrap">
+      <div class="head">
+        <span class="label">Experience</span>
+        <h2>Teaching, analytics and data engineering</h2>
+      </div>
+      <div class="exp">
+        <article class="job">
+          <div class="meta"><div><h3>Coding Mentor / Instructor</h3><p class="org">Code Young (Smart Owl Education) · Remote · Part-time</p></div><span class="when">Sep 2022 – now</span></div>
+          <ul><li>Teach Python, SQL and Power BI; <span class="figure">200+</span> learners trained, <span class="figure">90%</span> passing assessments</li><li>Design curriculum and project-based lessons aligned with industry practice</li></ul>
+        </article>
+        <article class="job">
+          <div class="meta"><div><h3>Data Analyst</h3><p class="org">RAJ Enterprises · Remote</p></div><span class="when">Sep 2022 – May 2026</span></div>
+          <ul><li>Automated recurring reports, cutting reporting effort by <span class="figure">25%</span></li><li>Built ETL pipelines and Power BI dashboards for management decisions</li></ul>
+        </article>
+        <article class="job">
+          <div class="meta"><div><h3>Instructor</h3><p class="org">Learner Circle · India · Freelance</p></div><span class="when">Jan – Sep 2022</span></div>
+          <ul><li>Delivered data analytics and visualisation courses to <span class="figure">100+</span> learners with <span class="figure">90%</span> completion</li><li>Wrote full course content for BI tools, Python and ETL</li></ul>
+        </article>
+        <article class="job">
+          <div class="meta"><div><h3>Database Administrator</h3><p class="org">Inchcape Shipping Services · Dubai, UAE</p></div><span class="when">Nov 2013 – Jun 2016</span></div>
+          <ul><li>Kept business-critical databases at <span class="figure">99.9%</span> uptime</li><li>Automated ETL and recovery procedures, improving reporting accuracy by <span class="figure">40%</span></li></ul>
+        </article>
+        <article class="job">
+          <div class="meta"><div><h3>STEM Mentor (Volunteer)</h3><p class="org">Mentor Café Program · Space Center Houston · Remote</p></div><span class="when">Sep 2025 – Mar 2026</span></div>
+          <ul><li>Mentored young women considering careers in science, technology and engineering</li></ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="skills">
+    <div class="wrap">
+      <div class="head">
+        <span class="label">Skills &amp; education</span>
+        <h2>What I work with</h2>
+      </div>
+      <div class="skills">
+        <div class="skillset"><h3>AI &amp; machine learning</h3><div class="chips"><span class="chip">Deep learning</span><span class="chip">CNN architecture design</span><span class="chip">TensorFlow</span><span class="chip">Keras</span><span class="chip">Computer vision</span><span class="chip">Explainable AI (Grad-CAM)</span><span class="chip">Python</span></div></div>
+        <div class="skillset"><h3>Data &amp; BI</h3><div class="chips"><span class="chip">SQL</span><span class="chip">Power BI · DAX</span><span class="chip">Tableau</span><span class="chip">ETL pipelines</span><span class="chip">Data modelling</span><span class="chip">Pandas · NumPy</span><span class="chip">Azure · Databricks</span></div></div>
+        <div class="skillset"><h3>Teaching</h3><div class="chips"><span class="chip">Curriculum design</span><span class="chip">Project-based learning</span><span class="chip">Online &amp; blended teaching</span><span class="chip">Mentoring</span><span class="chip">English · Tamil · Telugu</span></div></div>
+      </div>
+      <div class="edu">
+        <div><b>PhD, AI &amp; Deep Learning</b><span>Karpagam University, India · 2023–2026 · thesis submitted, viva pending</span></div>
+        <div><b>Master of Computer Applications</b><span>Madurai Kamaraj University · 2007–2010</span></div>
+        <div><b>Certifications</b><span>Level 4 Certificate in Education and Training (RQF) · Google Data Analytics · Power BI (Maven Analytics) · GIS Systems (NPTEL)</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="contact">
+    <div class="wrap">
+      <div class="contact">
+        <div>
+          <span class="label" style="color: inherit; opacity: .7">Contact</span>
+          <h2>Let's talk about data, AI or teaching.</h2>
+          <p>I'm based in Doha and available immediately, with no visa sponsorship needed. I'm happy to discuss data science, AI education and lecturer roles, or research collaboration.</p>
+        </div>
+        <div class="lines">
+          <div class="cline"><div><span class="k">LinkedIn</span><a class="v" href="https://www.linkedin.com/in/narmatha-s-705507149" target="_blank" rel="noopener">linkedin.com/in/narmatha-s-705507149</a></div></div>
+          <div class="cline"><div><span class="k">Email</span><span class="v" id="email">snarmatha16@gmail.com</span></div><button type="button" data-copy="snarmatha16@gmail.com">Copy</button></div>
+          <div class="cline"><div><span class="k">GitHub</span><a class="v" href="https://github.com/snarmathadatascience" target="_blank" rel="noopener">github.com/snarmathadatascience</a></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="yr">2026</span> Narmatha S · Doha, Qatar</span>
+    <span>Lab images are analysed locally in your browser. No tracking.</span>
+  </div>
+</footer>
+
+<script>
+// Pure image-forensics helpers for the Frequency Lab (no DOM).
+const Lab = (() => {
+  function rng(seed) {
+    return function () {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // In-place iterative radix-2 FFT. re/im are Float64Array views of length n (power of 2).
+  function fft1d(re, im) {
+    const n = re.length;
+    for (let i = 1, j = 0; i < n; i++) {
+      let bit = n >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+    }
+    for (let len = 2; len <= n; len <<= 1) {
+      const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+      for (let i = 0; i < n; i += len) {
+        let cr = 1, ci = 0;
+        for (let k = 0; k < len / 2; k++) {
+          const a = i + k, b = a + len / 2;
+          const xr = re[b] * cr - im[b] * ci, xi = re[b] * ci + im[b] * cr;
+          re[b] = re[a] - xr; im[b] = im[a] - xi; re[a] += xr; im[a] += xi;
+          const nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr;
+        }
+      }
+    }
+  }
+
+  // 2D FFT on n x n row-major arrays, in place.
+  function fft2d(re, im, n) {
+    const r = new Float64Array(n), i = new Float64Array(n);
+    for (let y = 0; y < n; y++) {
+      const o = y * n;
+      for (let x = 0; x < n; x++) { r[x] = re[o + x]; i[x] = im[o + x]; }
+      fft1d(r, i);
+      for (let x = 0; x < n; x++) { re[o + x] = r[x]; im[o + x] = i[x]; }
+    }
+    for (let x = 0; x < n; x++) {
+      for (let y = 0; y < n; y++) { r[y] = re[y * n + x]; i[y] = im[y * n + x]; }
+      fft1d(r, i);
+      for (let y = 0; y < n; y++) { re[y * n + x] = r[y]; im[y * n + x] = i[y]; }
+    }
+  }
+
+  function normalize01(a, lo = 0.01, hi = 0.99) {
+    const s = Float64Array.from(a).sort();
+    const a0 = s[Math.floor(lo * (s.length - 1))], a1 = s[Math.floor(hi * (s.length - 1))];
+    const d = a1 - a0 || 1, out = new Float64Array(a.length);
+    for (let k = 0; k < a.length; k++) out[k] = Math.min(1, Math.max(0, (a[k] - a0) / d));
+    return out;
+  }
+
+  // Natural-image-like texture: random phases with a 1/f amplitude spectrum.
+  function natural(n, seed) {
+    const R = rng(seed), re = new Float64Array(n * n), im = new Float64Array(n * n);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const fx = x <= n / 2 ? x : x - n, fy = y <= n / 2 ? y : y - n;
+      const f = Math.hypot(fx, fy);
+      const amp = f === 0 ? 0 : 1 / Math.pow(f, 1.15);
+      const ph = R() * 2 * Math.PI;
+      re[y * n + x] = amp * Math.cos(ph); im[y * n + x] = amp * Math.sin(ph);
+    }
+    for (let k = 0; k < n * n; k++) im[k] = -im[k];      // inverse FFT via conjugation
+    fft2d(re, im, n);
+    return normalize01(re);
+  }
+
+  // Simulates a generator's transposed-convolution upsampling (stride 2, 3x3 kernel).
+  // A smooth (bilinear) enlargement plus a small share of an uneven-overlap kernel leaves
+  // a faint checkerboard that is hard to see but obvious in the spectrum.
+  function generatorStyle(n, seed, strength = 0.06) {
+    const h = n / 2, low = natural(h, seed), up = new Float64Array(n * n), out = new Float64Array(n * n);
+    for (let y = 0; y < h; y++) for (let x = 0; x < h; x++) up[(2 * y) * n + 2 * x] = low[y * h + x];
+    const smooth = [0.25, 0.5, 0.25];
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      let a = 0, b = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const v = up[((y + dy + n) % n) * n + ((x + dx + n) % n)];
+        a += smooth[dy + 1] * smooth[dx + 1] * 4 * v;   // bilinear: even weights per phase
+        b += v / 2.25;                                   // box: uneven weights per phase
+      }
+      out[y * n + x] = (1 - strength) * a + strength * b;
+    }
+    return normalize01(out, 0.005, 0.995);
+  }
+
+  function blur5(g, n) {
+    const k = [1, 4, 6, 4, 1], tmp = new Float64Array(n * n), out = new Float64Array(n * n);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      let s = 0; for (let d = -2; d <= 2; d++) s += k[d + 2] * g[y * n + Math.min(n - 1, Math.max(0, x + d))];
+      tmp[y * n + x] = s / 16;
+    }
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      let s = 0; for (let d = -2; d <= 2; d++) s += k[d + 2] * tmp[Math.min(n - 1, Math.max(0, y + d)) * n + x];
+      out[y * n + x] = s / 16;
+    }
+    return out;
+  }
+
+  function sobel(g, n) {
+    const out = new Float64Array(n * n);
+    const at = (x, y) => g[Math.min(n - 1, Math.max(0, y)) * n + Math.min(n - 1, Math.max(0, x))];
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const gx = at(x + 1, y - 1) + 2 * at(x + 1, y) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x - 1, y) - at(x - 1, y + 1);
+      const gy = at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x, y - 1) - at(x + 1, y - 1);
+      out[y * n + x] = Math.hypot(gx, gy);
+    }
+    return normalize01(out, 0, 0.99);
+  }
+
+  function residual(g, blurred) {
+    const r = new Float64Array(g.length);
+    for (let k = 0; k < g.length; k++) r[k] = Math.abs(g[k] - blurred[k]);
+    return normalize01(r, 0, 0.99);
+  }
+
+  // Returns {display: shifted log-magnitude in [0,1], score: grid-peak score}.
+  function spectrum(g, n) {
+    const re = new Float64Array(n * n), im = new Float64Array(n * n);
+    let mean = 0; for (let k = 0; k < g.length; k++) mean += g[k]; mean /= g.length;
+    for (let y = 0; y < n; y++) {
+      const wy = 0.5 - 0.5 * Math.cos(2 * Math.PI * y / (n - 1));
+      for (let x = 0; x < n; x++) {
+        const wx = 0.5 - 0.5 * Math.cos(2 * Math.PI * x / (n - 1));
+        re[y * n + x] = (g[y * n + x] - mean) * wx * wy;
+      }
+    }
+    fft2d(re, im, n);
+    const mag = new Float64Array(n * n);
+    for (let k = 0; k < n * n; k++) mag[k] = Math.hypot(re[k], im[k]);
+
+    // Grid-peak score: energy at the half-sampling-rate points versus typical high-frequency energy.
+    const h = n / 2, peaks = [[h, 0], [0, h], [h, h]];
+    const near = (x, y) => peaks.some(([px, py]) => {
+      const dx = Math.min(Math.abs(x - px), n - Math.abs(x - px)), dy = Math.min(Math.abs(y - py), n - Math.abs(y - py));
+      return dx <= 2 && dy <= 2;
+    });
+    const peakVals = peaks.map(([px, py]) => {
+      let m = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) m = Math.max(m, mag[((py + dy + n) % n) * n + ((px + dx + n) % n)]);
+      return m;
+    });
+    const base = [];
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const fx = x <= h ? x : n - x, fy = y <= h ? y : n - y, r = Math.hypot(fx, fy);
+      if (r > 0.35 * n && !near(x, y)) base.push(mag[y * n + x]);
+    }
+    base.sort((a, b) => a - b);
+    let meanAll = 0; for (let k = 0; k < mag.length; k++) meanAll += mag[k]; meanAll /= mag.length;
+    // Floor keeps very smooth images (almost no high-frequency energy) from producing huge ratios.
+    const median = Math.max(base[Math.floor(base.length / 2)] || 0, 0.02 * meanAll, 1e-12);
+    const score = peakVals.reduce((a, b) => a + b, 0) / peakVals.length / median;
+
+    const disp = new Float64Array(n * n);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      disp[((y + h) % n) * n + ((x + h) % n)] = Math.log1p(mag[y * n + x]);
+    }
+    return { display: normalize01(disp, 0.02, 0.999), score };
+  }
+
+  const MAGMA = [[0, 0, 4], [40, 11, 84], [101, 21, 110], [159, 42, 99], [212, 72, 66], [245, 125, 21], [250, 193, 39], [252, 255, 164]];
+  function magma(t) {
+    const p = Math.min(0.9999, Math.max(0, t)) * (MAGMA.length - 1), i = Math.floor(p), f = p - i;
+    const a = MAGMA[i], b = MAGMA[i + 1];
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  }
+
+  return { rng, fft2d, natural, generatorStyle, blur5, sobel, residual, spectrum, magma, normalize01 };
+})();
+if (typeof module !== "undefined") module.exports = Lab;
+
+</script>
+<script>
+(function () {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const hex = (h) => { h = h.replace("#", ""); if (h.length === 3) h = h.split("").map(c => c + c).join(""); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  let pal = null;
+  const readPalette = () => { pal = { line: hex(css("--line")), amber: hex(css("--amber")), accent: hex(css("--accent")), surface: hex(css("--surface")) }; };
+  readPalette();
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { readPalette(); drawScan(performance.now()); });
+  new MutationObserver(() => { readPalette(); drawScan(performance.now()); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  /* ---------- Hero scan grid ---------- */
+  const cv = document.getElementById("scan"), ctx = cv.getContext("2d");
+  const N = 26;
+  function sizeScan() {
+    const w = cv.clientWidth || 400, dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(w * dpr); cv.height = Math.round(w * dpr);
+  }
+  const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+  function ramp(t) {
+    t = Math.max(0, Math.min(1, t));
+    return t < 0.5 ? mix(pal.line, pal.amber, t / 0.5) : mix(pal.amber, pal.accent, (t - 0.5) / 0.5);
+  }
+  function drawScan(now) {
+    if (!pal) return;
+    const W = cv.width, cell = W / N, gap = Math.max(1, cell * 0.14), t = now / 1000;
+    ctx.clearRect(0, 0, W, W);
+    const scanY = reduce ? -1 : ((t * 0.18) % 1.4) - 0.2;
+    const pulse = reduce ? 0.5 : 0.5 + 0.5 * Math.sin(t * 0.9);
+    const eyes = [[0.385, 0.45], [0.615, 0.45]], mouth = [0.5, 0.7];
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const x = (i + 0.5) / N, y = (j + 0.5) / N;
+      const e = ((x - 0.5) / 0.33) ** 2 + ((y - 0.53) / 0.42) ** 2;
+      if (e > 1.05) continue;
+      let h = 0;
+      for (const [ex, ey] of eyes) h += Math.exp(-(((x - ex) ** 2) / 0.004 + ((y - ey) ** 2) / 0.0025));
+      h += 0.9 * Math.exp(-(((x - mouth[0]) ** 2) / 0.012 + ((y - mouth[1]) ** 2) / 0.002)) * (0.6 + 0.4 * pulse);
+      h += 0.55 * Math.exp(-((e - 0.92) ** 2) / 0.006) * (0.4 + 0.6 * (1 - pulse));
+      if (scanY >= 0) h += 0.35 * Math.exp(-((y - scanY) ** 2) / 0.0015);
+      const c = ramp(Math.min(1, h));
+      ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
+      const r = Math.min(cell * 0.22, 6);
+      const px = i * cell + gap / 2, py = j * cell + gap / 2, s = cell - gap;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(px, py, s, s, r); else ctx.rect(px, py, s, s);
+      ctx.fill();
+    }
+  }
+  sizeScan(); drawScan(0);
+  window.addEventListener("resize", () => { sizeScan(); drawScan(performance.now()); });
+  if (!reduce) {
+    let visible = true;
+    new IntersectionObserver(([en]) => { visible = en.isIntersecting; }).observe(cv);
+    const loop = (now) => { if (visible && !document.hidden) drawScan(now); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------- Frequency lab ---------- */
+  const n = 256;
+  const put = (id, arr, colour) => {
+    const c = document.getElementById(id), g = c.getContext("2d"), img = g.createImageData(n, n);
+    for (let k = 0; k < n * n; k++) {
+      const v = arr[k];
+      let r, gg, b;
+      if (colour) [r, gg, b] = Lab.magma(v); else r = gg = b = v * 255;
+      img.data[4 * k] = r; img.data[4 * k + 1] = gg; img.data[4 * k + 2] = b; img.data[4 * k + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+  };
+  const fmt = new Intl.NumberFormat("en", { maximumFractionDigits: 1 });
+  function analyse(gray, name) {
+    document.getElementById("src-name").textContent = name;
+    put("c-orig", gray, false);
+    const blurred = Lab.blur5(gray, n);
+    put("c-edge", Lab.sobel(gray, n), false);
+    put("c-ctx", blurred, false);
+    put("c-res", Lab.residual(gray, blurred), true);
+    const sp = Lab.spectrum(gray, n);
+    put("c-fft", sp.display, true);
+    const s = sp.score;
+    document.getElementById("score").textContent = s >= 100 ? Math.round(s).toLocaleString("en") + "×" : fmt.format(s) + "×";
+    const pct = Math.min(100, Math.max(2, (Math.log10(Math.max(1, s)) / 3.5) * 100));
+    document.getElementById("bar").style.width = pct + "%";
+    const v = document.getElementById("verdict"), ex = document.getElementById("explain");
+    if (s >= 20) {
+      v.textContent = "Strong regular grid found";
+      ex.textContent = "The bright dots at the edges and corners of the spectrum show a pattern that repeats every two pixels. This is typical of generator-style upsampling.";
+    } else if (s >= 4) {
+      v.textContent = "Mild grid peaks";
+      ex.textContent = "Some regular structure is present. Resizing and compression can cause this in ordinary photos, so it is weak evidence on its own.";
+    } else {
+      v.textContent = "No regular grid";
+      ex.textContent = "The fine detail looks irregular, like a natural texture. That does not prove the image is real: many generators leave no grid.";
+    }
+  }
+  const samples = {
+    nat: () => analyse(Lab.natural(n, 11), "Natural texture, greyscale, 256 × 256"),
+    gen: () => analyse(Lab.generatorStyle(n, 11), "Same kind of texture, enlarged 2× the way many generators do it"),
+  };
+  const bNat = document.getElementById("s-nat"), bGen = document.getElementById("s-gen");
+  const press = (which) => { bNat.setAttribute("aria-pressed", which === "nat"); bGen.setAttribute("aria-pressed", which === "gen"); };
+  bNat.addEventListener("click", () => { press("nat"); samples.nat(); });
+  bGen.addEventListener("click", () => { press("gen"); samples.gen(); });
+
+  document.getElementById("lab-file").addEventListener("change", (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const url = URL.createObjectURL(f), im = new Image();
+    im.onload = () => {
+      const c = document.createElement("canvas"); c.width = c.height = n;
+      const g = c.getContext("2d"), side = Math.min(im.naturalWidth, im.naturalHeight);
+      g.drawImage(im, (im.naturalWidth - side) / 2, (im.naturalHeight - side) / 2, side, side, 0, 0, n, n);
+      const d = g.getImageData(0, 0, n, n).data, gray = new Float64Array(n * n);
+      for (let k = 0; k < n * n; k++) gray[k] = (0.299 * d[4 * k] + 0.587 * d[4 * k + 1] + 0.114 * d[4 * k + 2]) / 255;
+      press(null);
+      analyse(gray, f.name + ", centre crop, greyscale, 256 × 256");
+      URL.revokeObjectURL(url);
+    };
+    im.onerror = () => {
+      document.getElementById("verdict").textContent = "That file could not be opened as an image";
+      document.getElementById("explain").textContent = "Try a JPG, PNG or WebP photo.";
+      URL.revokeObjectURL(url);
+    };
+    im.src = url;
+    e.target.value = "";
+  });
+  samples.nat();
+
+  /* ---------- Publications ---------- */
+  const pubs = [
+    { y: 2026, t: "Deep Inception V7 integrated convolution neural network for deepfake prediction in online content using advanced technology", v: "<em>Archives for Technical Sciences</em>, 35(1), 558–570", vt: "Archives for Technical Sciences, 35(1), 558–570", type: "Journal", doi: "10.70102/afts.2026.1835.558", key: true },
+    { y: 2026, t: "Deep Inception V4 convolution neural network towards predictive representation learning of deepfake contents in online social networks", v: "<em>Journal of Wireless Mobile Networks, Ubiquitous Computing, and Dependable Applications (JoWUA)</em>, 17(1)", vt: "Journal of Wireless Mobile Networks, Ubiquitous Computing, and Dependable Applications (JoWUA), 17(1)", type: "Journal", doi: "10.58346/JOWUA.2026.I1.045", key: true },
+    { y: 2025, t: "Deep Inception V5 convolution neural network as latent features supervision network towards deep fake detection", v: "<em>International Conference on Emerging Research in Computational Science (ICERCS 2024)</em>, IEEE", vt: "ICERCS 2024, IEEE", type: "IEEE conference", doi: "10.1109/ICERCS63125.2024.10895414", key: true },
+    { y: 2024, t: "Deep fake detection methodologies in media files using deep learning techniques: a systematic review", v: "<em>IC-IRISH'24</em>, Thailand (Nehru College) · ISBN 978-93-92032-99-8", vt: "IC-IRISH'24, Thailand. ISBN 978-93-92032-99-8", type: "Conference · review" },
+    { y: 2023, t: "Deep learning technique for recognition of deep fake videos", v: "<em>Karpagam Journal of Computer Science (KJCS)</em>, 18, 237–242", vt: "Karpagam Journal of Computer Science, 18, 237–242", type: "Journal" },
+  ];
+  const list = document.getElementById("pubs");
+  for (const p of pubs) {
+    const li = document.createElement("li"); li.className = "pub";
+    const cite = `Narmatha S. (${p.y}). ${p.t}. ${p.vt}.` + (p.doi ? ` https://doi.org/${p.doi}` : "");
+    li.innerHTML = `<span class="yr">${p.y}</span>
+      <div><h3></h3><p class="venue">${p.v}</p>
+        <div class="tags"><span class="tag ${p.key ? "hot" : ""}">${p.type}</span>${p.key ? '<span class="tag hot">Deep Inception</span>' : ""}${p.doi ? `<span class="tag">DOI ${p.doi}</span>` : ""}</div></div>
+      <div class="links">${p.doi ? `<a class="btn" href="https://doi.org/${p.doi}" target="_blank" rel="noopener">Read paper</a>` : ""}<button class="btn" type="button">Copy citation</button></div>`;
+    li.querySelector("h3").textContent = p.t;
+    li.querySelector("button").dataset.copy = cite;
+    list.appendChild(li);
+  }
+
+  /* ---------- Copy buttons ---------- */
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-copy]");
+    if (!b) return;
+    const text = b.dataset.copy, label = b.textContent;
+    const done = (msg) => { b.textContent = msg; setTimeout(() => { b.textContent = label; }, 1600); };
+    const fallback = () => {
+      const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand("copy"); } catch (_) {}
+      ta.remove(); done(ok ? "Copied" : "Select and copy");
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => done("Copied"), fallback);
+    else fallback();
+  });
+
+  document.getElementById("yr").textContent = new Date().getFullYear();
+})();
+</script>
+
+</body>
+</html>
